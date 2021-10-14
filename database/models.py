@@ -12,7 +12,7 @@ class Client(Base):
     surname = Column(String(250))
     password = Column(String(100))
     email = Column(String(250), unique=True)
-    orders = relationship("Order", back_populates = "client")
+    orders = relationship("Order", back_populates="client")
 
     # TODO: finish up with password encryption
     def __init__(self, email, password):
@@ -32,7 +32,7 @@ class Order(Base):
 
     client_id = Column(Integer, ForeignKey('clients.id'))
     client_name = Column(String, nullable=False)
-    client = relationship("Client", back_populates = "orders")
+    client = relationship("Client", back_populates="orders")
 
     created_at = Column(DateTime, nullable=False)
     total = Column(Integer, nullable=False)
@@ -50,4 +50,3 @@ class Order(Base):
         return {"data": self.id, "client_name": self.client_name,
                 "client_id": self.client_id, "created_at": str(self.created_at),
                 "total": self.total}
-

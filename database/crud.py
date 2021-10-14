@@ -55,7 +55,7 @@ def delete_order(db: Session, order: schemes.OrderBase):
     db.commit()
 
 
-def create_order(db:Session, order: schemes.OrderCreate):
+def create_order(db: Session, order: schemes.OrderCreate):
     test_client = db.query(models.Client).get(order.client_id)
     if test_client is None:
         return False
@@ -68,11 +68,10 @@ def create_order(db:Session, order: schemes.OrderCreate):
 
 def update_order(db: Session, data: schemes.OrderUpdate) -> None:
     test_order = db.query(models.Order).get(data.id)
-    full_data = {k : v for k, v in data.dict().items()}
+    full_data = {k: v for k, v in data.dict().items()}
     full_data['client_name'] = db.query(models.Client).get(full_data['client_id']).name
     for attr, val in full_data.items():
         setattr(test_order, attr, val)
         db.flush()
     db.commit()
 # endregion
-
