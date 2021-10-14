@@ -30,7 +30,7 @@ class Order(Base):
     __tablename__ = 'orders'
     id = Column(Integer, primary_key=True)
 
-    client_id = Column(Integer, ForeignKey('clients.data'))
+    client_id = Column(Integer, ForeignKey('clients.id'))
     client_name = Column(String, nullable=False)
     client = relationship("Client", back_populates = "orders")
 
