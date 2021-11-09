@@ -33,6 +33,7 @@ def get_db():
         db.close()
 
 
+# Root page
 @app.get("/")
 def read_root():
     return RedirectResponse(url="/docs/")
@@ -40,15 +41,22 @@ def read_root():
 
 # region clients
 @app.get("/clients/", response_model=Union[List[schemes.Client], schemes.Client])
-def show_clients(client_id: Optional[int] = None, db: Session = Depends(get_db)):
+def show_clients(client_id: Optional[int] = None,
+                 db: Session = Depends(get_db)):
     if client_id:
         return crud.get_client_by_id(db, client_id)
     else:
         return crud.get_clients(db)
 
+# Another variation (through route)
+# @app.get("/clients/{client_id}", response_model=schemes.Client)
+# def show_clients(client_id: int, db: Session = Depends(get_db)):
+#     return crud.get_client_by_id(db, client_id)
 
-@app.post("/clients/", response_model=schemes.ClientCreate)
-def create_client(client: schemes.ClientCreate, db: Session = Depends(get_db)):
+
+@app.post("/clients/")
+def create_client(client: schemes.ClientCreate,
+                  db: Session = Depends(get_db)):
     test_client = crud.get_client_by_email(db, client.email)
     print(test_client)
     if test_client:
@@ -57,8 +65,9 @@ def create_client(client: schemes.ClientCreate, db: Session = Depends(get_db)):
     return JSONResponse(status_code=200, content={"msg": "Successfully registered"})
 
 
-@app.patch("/clients/", response_model=schemes.ClientUpdate)
-def update_client(info: schemes.ClientUpdate, db: Session = Depends(get_db)):
+@app.patch("/clients/")
+def update_client(info: schemes.ClientUpdate,
+                  db: Session = Depends(get_db)):
     test_client1 = crud.get_client_by_id(db, info.id)
     test_client2 = crud.get_client_by_email(db, info.email)
     if not test_client1:
@@ -72,32 +81,19 @@ def update_client(info: schemes.ClientUpdate, db: Session = Depends(get_db)):
     return JSONResponse(status_code=200, content={"msg": "Successfully updated"})
 
 
-@app.delete("/clients/", response_model=schemes.ClientBase)
-def delete_client(email: schemes.ClientBase, db: Session = Depends(get_db)):
+@app.delete("/clients/")
+def delete_client(email: schemes.ClientBase,
+                  db: Session = Depends(get_db)):
     test_client = crud.get_client_by_email(db, email.email)
     if not test_client:
         raise HTTPException(status_code=400, detail="Client not found")
     crud.delete_client(db, email)
     return JSONResponse(status_code=200, content={"msg": "Successfully deleted"})
 
-
-# Another variation
-@app.get("/clients/{client_id}", response_model=schemes.Client)
-def show_clients(client_id: int, db: Session = Depends(get_db)):
-    return crud.get_client_by_id(db, client_id)
-
 # endregion
 
 
 # region orders
-@app.post("/orders/", response_model=schemes.OrderCreate)
-def add_order(order: schemes.OrderCreate, db: Session = Depends(get_db)):
-    if crud.create_order(db, order):
-        return JSONResponse(status_code=200, content={"msg": "Record added"})
-    else:
-        raise HTTPException(status_code=400, detail="Wrong client data")
-
-
 @app.get("/orders/", response_model=Union[List[schemes.Order], schemes.Order])
 def get_orders(client_id: Optional[int] = None,
                order_id: Optional[int] = None,
@@ -117,21 +113,29 @@ def get_orders(client_id: Optional[int] = None,
         return crud.get_orders(db)
 
 
-@app.delete("/orders/", response_model=schemes.ClientBase)
+@app.post("/orders/")
+def add_order(order: schemes.OrderCreate, db: Session = Depends(get_db)):
+    if crud.create_order(db, order):
+        return JSONResponse(status_code=200, content={"msg": "Record added"})
+    else:
+        raise HTTPException(status_code=400, detail="Wrong client data")
+
+
+@app.patch("/orders/")
+def update_order(data: schemes.OrderUpdate, db: Session = Depends(get_db)):
+    if not crud.get_order(db, data.id) or not crud.get_client_by_id(db, data.client_id):
+        raise HTTPException(status_code=400)
+    crud.update_order(db, data)
+    return JSONResponse(status_code=200, content={"msg": "Record updated"})
+
+
+@app.delete("/orders/")
 def delete_order(data: schemes.OrderBase, db: Session = Depends(get_db)):
     test_order = crud.get_order(db, data.id)
     if not test_order:
         raise HTTPException(status_code=400, detail="Order not found")
     crud.delete_order(db, data)
     return JSONResponse(status_code=200, content={"msg": "Successfully deleted"})
-
-
-@app.patch("/orders/", response_model=schemes.ClientBase)
-def update_order(data: schemes.OrderUpdate, db: Session = Depends(get_db)):
-    if not crud.get_order(db, data.id) or not crud.get_client_by_id(db, data.client_id):
-        raise HTTPException(status_code=400)
-    crud.update_order(db, data)
-    return JSONResponse(status_code=200, content={"msg": "Record updated"})
 
 # endregion
 
